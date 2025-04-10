@@ -1,41 +1,38 @@
 package com.crafto.server.Controllers;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import com.crafto.server.model.User;
+import com.crafto.server.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.HttpSession;
-import java.util.Map;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/user")
+@CrossOrigin(origins = "http://localhost:5173") // Adjust for your frontend URL
 public class UserController {
 
-    @GetMapping("/user")
-    public ResponseEntity<Map<String, Object>> getUser(HttpSession session) {
-        Object user = session.getAttribute("user");
+    @Autowired
+    private UserRepository userRepository;
 
-        if (user != null) {
-            return ResponseEntity.ok(Map.of("user", user));
+    @PostMapping("/google-auth")
+    public ResponseEntity<?> handleGoogleAuth(@RequestBody User userPayload) {
+        Optional<User> existingUser = userRepository.findById(userPayload.getUid());
+
+        if (existingUser.isPresent()) {
+            // User already exists, return UID
+            return ResponseEntity.ok(existingUser.get().getUid());
+        } else {
+            // Save new user
+            User savedUser = userRepository.save(userPayload);
+            return ResponseEntity.ok(savedUser.getUid());
         }
-        return ResponseEntity.status(401).body(Map.of("error", "No user authenticated"));
     }
-
-    @GetMapping("/logout")
-    public ResponseEntity<Map<String, String>> logout(HttpServletRequest request, HttpServletResponse response) {
-        HttpSession session = request.getSession(false);
-
-        if (session != null) {
-            session.invalidate();
-        }
-
-        new SecurityContextLogoutHandler().logout(request, response, null);
-
-        // ✅ Return JSON response instead of a redirect
-        return ResponseEntity.ok(Map.of("message", "Logout successful"));
+    @GetMapping("/{uid}")
+    public ResponseEntity<User> getUserByUid(@PathVariable String uid) {
+        Optional<User> user = userRepository.findById(uid);
+        return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 }
+

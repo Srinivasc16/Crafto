@@ -53,7 +53,7 @@ const SubProducts = () => {
     }, [productId]);
 
     return (
-        <div className="max-w-6xl mx-auto mt-20 mb-20 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto mt-25 mb-20 px-4 sm:px-6">
             {/* Breadcrumb navigation */}
             <nav className="flex items-center text-sm text-gray-500 mb-6">
                 <button onClick={handleBack}  className="flex items-center hover:text-orange-500 transition-colors">

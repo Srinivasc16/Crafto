@@ -8,7 +8,9 @@ import Checkout from "./Checkout.jsx";
 import Login from "./Login.jsx";
 import Workshop from "./Workshop.jsx";
 import ScrollToTop from "./ScrollToTop.jsx";
-import Logout from "./Logout.jsx";
+import OAuthCallback from "./OAuthCallback.jsx";
+import Footer from "./Fotter.jsx";
+import Profile from "./Profile.jsx";
 
 const App = () => (
     <>
@@ -17,14 +19,17 @@ const App = () => (
         </div>
         <ScrollToTop />
         <Routes>
+            <Route path="/home/:uid" element={<Home />} />
             <Route path="/" element={<Home />} />
+            <Route path="/profile/:uid" element={<Profile />} />
             <Route path="/products" element={<Products />} />
             <Route path="/products/:productId" element={<SubProducts />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/login" element={<Login />} />
             <Route path="/workshop" element={<Workshop />} />
-            <Route path="/logout" element={<Logout />} />
+            <Route path="/oauth-callback" element={<OAuthCallback />} />
         </Routes>
+        <Footer />
     </>
 );
 

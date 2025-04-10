@@ -1,4 +1,4 @@
-package com.crafto.server.ControllerS;
+package com.crafto.server.Controllers;
 
 import com.crafto.server.model.SubProduct;
 import com.crafto.server.Service.SubProductService;
