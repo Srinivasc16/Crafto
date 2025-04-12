@@ -19,9 +19,8 @@ const App = () => (
         </div>
         <ScrollToTop />
         <Routes>
-            <Route path="/home/:uid" element={<Home />} />
             <Route path="/" element={<Home />} />
-            <Route path="/profile/:uid" element={<Profile />} />
+            <Route path="/profile/:sections" element={<Profile />} />
             <Route path="/products" element={<Products />} />
             <Route path="/products/:productId" element={<SubProducts />} />
             <Route path="/checkout" element={<Checkout />} />

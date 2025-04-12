@@ -31,7 +31,7 @@ const Navbar = () => {
             try {
                 const storedUser = localStorage.getItem("username");
                 const storedMail = localStorage.getItem("useremail");
-                const storedUid = localStorage.getItem("userid");
+                const storedUid = localStorage.getItem("Userid");
 
                 if (storedUid) {
                     const response = await axios.get(`http://localhost:8080/api/user/${storedUid}`);
@@ -39,7 +39,7 @@ const Navbar = () => {
                     console.log(storedUid);
                 } else if (storedUser) {
                     setUser({ name: storedUser, email: storedMail });
-                    console.log(storedUser);
+                    console.log(storedUid);
                 }
             } catch (error) {
                 console.error("Failed to fetch user:", error);
@@ -83,6 +83,7 @@ const Navbar = () => {
     const handleSignOut = () => {
         localStorage.removeItem("username");
         localStorage.removeItem("useremail");
+        localStorage.removeItem("userid");
         setUser(null);
         setUserMenuOpen(false);
         navigate("/");
@@ -137,13 +138,13 @@ const Navbar = () => {
                                             <p className="text-sm text-gray-500">Signed in as</p>
                                             <p className="text-sm font-medium text-gray-800 truncate">{user.email}</p>
                                         </div>
-                                        <a href={`/profile/${userid}`}
+                                        <a href={`/profile/profile`}
                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50">Your
                                             Profile</a>
-                                        <a href={`/address/${userid}`}
+                                        <a href={`/profile/addresses`}
                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50">Your
                                             Address</a>
-                                        <a href={`/orders/${userid}`}
+                                        <a href={`/profile/orders`}
                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50">Orders</a>
                                         <button
                                             onClick={handleSignOut}

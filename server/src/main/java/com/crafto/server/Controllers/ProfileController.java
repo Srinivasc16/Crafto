@@ -2,17 +2,17 @@ package com.crafto.server.Controllers;
 
 import com.crafto.server.model.Profile;
 import com.crafto.server.Service.ProfileService;
+import com.crafto.server.repository.ProfileRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.crafto.server.repository.ProfileRepository;
 
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/profile")
-@CrossOrigin(origins = "http://localhost:5173") // Allow frontend calls
+@CrossOrigin(origins = "http://localhost:5173")
 public class ProfileController {
 
     @Autowired
@@ -21,16 +21,14 @@ public class ProfileController {
     @Autowired
     private ProfileRepository profileRepository;
 
-    @GetMapping("/get")
-    public ResponseEntity<Profile> getProfile(@RequestParam String uid) {
+    // GET by UID
+    @GetMapping("/{uid}")
+    public ResponseEntity<Profile> getProfileByUid(@PathVariable String uid) {
         Optional<Profile> profile = profileRepository.findByUid(uid);
-        if (profile.isPresent()) {
-            return ResponseEntity.ok(profile.get());
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return profile.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    // POST: Create or update profile
     @PostMapping
     public ResponseEntity<?> createOrUpdateProfile(@RequestBody Profile profile) {
         if (profile.getEmail() == null || profile.getEmail().isEmpty()) {

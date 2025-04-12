@@ -13,15 +13,16 @@ public class ProfileService {
     @Autowired
     private ProfileRepository profileRepository;
 
-    public Optional<Profile> getProfileByEmail(String email) {
-        return profileRepository.findByUid(email);
+    public Optional<Profile> getProfileByUid(String uid) {
+        return profileRepository.findByUid(uid);
     }
 
     public Profile createOrUpdateProfile(Profile profile) {
-        Optional<Profile> existing = profileRepository.findByUid(profile.getEmail());
+        Optional<Profile> existing = profileRepository.findByUid(profile.getUid());
         if (existing.isPresent()) {
             Profile existingProfile = existing.get();
             if (profile.getName() != null) existingProfile.setName(profile.getName());
+            if (profile.getEmail() != null) existingProfile.setEmail(profile.getEmail());
             if (profile.getDetails() != null) existingProfile.setDetails(profile.getDetails());
             return profileRepository.save(existingProfile);
         } else {
@@ -29,4 +30,3 @@ public class ProfileService {
         }
     }
 }
-

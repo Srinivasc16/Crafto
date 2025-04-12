@@ -12,8 +12,17 @@ const Checkout = () => {
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false); // Add loading state for submission
     const navigate = useNavigate();
+    const [addresses, setAddresses] = useState([]);
+    const [selectedAddress, setSelectedAddress] = useState(null); // Track selected address for editing
+    const [editMode, setEditMode] = useState(false); // Flag to toggle edit mode
+    const [formxData, setFormxData] = useState({
+        street: "",
+        city: "",
+        state: "",
+        zipcode: "",
+    });
 
-    // Form state
+    const uid = "w8QILCENGbOqdeTwrSghWOVbeU33";
     const [formData, setFormData] = useState({
         fullName: "",
         phone: "",
@@ -175,6 +184,84 @@ const Checkout = () => {
                 firstErrorField.scrollIntoView({ behavior: "smooth", block: "center" });
             }
         }
+    };
+    useEffect(() => {
+        const fetchAddresses = async () => {
+            try {
+                const res = await fetch(`http://localhost:8080/api/address/${uid}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const formatted = Array.isArray(data) ? data : [data]; // handle single or array response
+                    setAddresses(formatted.map((a, index) => ({
+                        ...a,
+                        id: index + 1, // Assuming an id field is not provided by the backend
+                        isDefault: index === 0, // Set the first address as default
+                    })));
+                }
+            } catch (error) {
+                console.error("Error fetching address:", error);
+                setAddresses([]); // Fallback to an empty list
+            }
+        };
+
+        fetchAddresses();
+    }, [uid]);
+
+    const handleSelectAddress = (address) => {
+        setSelectedAddress(address);
+        setFormxData({
+            street: address.street,
+            city: address.city,
+            state: address.state,
+            zipcode: address.zipcode,
+            country: address.country,
+            isDefault: address.isDefault,
+        });
+        setEditMode(true); // Show the form for editing
+    };
+
+    const handleEditChange = (e) => {
+        const { name, value } = e.target;
+        setFormxData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
+
+    const handleSaveAddress = async () => {
+        try {
+            const updatedAddress = {
+                ...formData,
+                uid,
+            };
+
+            const res = await fetch("http://localhost:8080/api/address/save", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify([updatedAddress]), // Send as an array even for a single update
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to save address");
+            }
+
+            // Update state with the new address (you might want to refetch or update the specific address)
+            setAddresses((prev) =>
+                prev.map((a) =>
+                    a.id === selectedAddress.id ? { ...a, ...formData } : a
+                )
+            );
+            setEditMode(false); // Exit edit mode
+        } catch (error) {
+            console.error("Error saving address:", error);
+            alert("Failed to save address. Please try again.");
+        }
+    };
+
+    const handleCancelEdit = () => {
+        setEditMode(false); // Exit edit mode without saving
     };
 
     return (

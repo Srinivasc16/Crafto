@@ -1,14 +1,14 @@
 package com.crafto.server.model;
 
-
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "profiles")
+@Table(name = "profilex")
 public class Profile {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String uid;
 
     private String name;
@@ -17,7 +17,8 @@ public class Profile {
 
     public Profile() {}
 
-    public Profile(String name, String email, String details) {
+    public Profile(String uid, String name, String email, String details) {
+        this.uid = uid;
         this.name = name;
         this.email = email;
         this.details = details;
@@ -25,8 +26,12 @@ public class Profile {
 
     // Getters and Setters
 
-    public String getId() {
+    public String getUid() {
         return uid;
+    }
+
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 
     public String getName() {
@@ -53,4 +58,3 @@ public class Profile {
         this.details = details;
     }
 }
-
