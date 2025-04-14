@@ -11,7 +11,7 @@ import ScrollToTop from "./ScrollToTop.jsx";
 import OAuthCallback from "./OAuthCallback.jsx";
 import Footer from "./Fotter.jsx";
 import Profile from "./Profile.jsx";
-
+import ForceReload from "./ForceReload.jsx";
 const App = () => (
     <>
         <div className="fixed top-0 left-0 w-full z-50">
@@ -19,7 +19,7 @@ const App = () => (
         </div>
         <ScrollToTop />
         <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<ForceReload />} />
             <Route path="/profile/:sections" element={<Profile />} />
             <Route path="/products" element={<Products />} />
             <Route path="/products/:productId" element={<SubProducts />} />

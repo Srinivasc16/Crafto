@@ -33,6 +33,7 @@ const Login = () => {
         try {
             setLoading(true);
             setError("");
+
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
 
@@ -42,31 +43,33 @@ const Login = () => {
                 email: user.email
             };
 
-            // Send data to backend
+            // 1️⃣ Store in DB if not exists
             await fetch("http://localhost:8080/api/user/google-auth", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(userData)
             });
 
-            const profileData = {
-                uid: user.uid,
-                name: user.displayName,
-                email: user.email
-            };
+            // 2️⃣ Store user in session
+            await fetch("http://localhost:8080/api/user", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                credentials: "include", // 🚨 important: sends session cookie
+                body: JSON.stringify(userData)
+            });
 
+            // 3️⃣ Store profile data
             await fetch("http://localhost:8080/api/profile", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(profileData)
+                body: JSON.stringify(userData)
             });
 
-
-            localStorage.setItem("username", user.displayName || user.email);
-            localStorage.setItem("useremail", user.email);
-            localStorage.setItem("Userid", user.uid);
-
+            // 4️⃣ Navigate — no localStorage needed
             navigate("/");
+
         } catch (error) {
             console.error("Google Login Error:", error.message);
             setError(`Google sign-in failed: ${error.message}`);
@@ -74,6 +77,7 @@ const Login = () => {
             setLoading(false);
         }
     };
+
 
     const handleEmailAuth = async (e) => {
         e.preventDefault();
@@ -193,7 +197,7 @@ const Login = () => {
                 <div
                     className="absolute inset-0 bg-cover bg-center"
                     style={{
-                        backgroundImage: "url('https://images.pexels.com/photos/967382/pexels-photo-967382.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')",
+                        backgroundImage: "url('https://images.pexels.com/photos/7123111/pexels-photo-7123111.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')",
                     }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-900/30 to-purple-900/30" />

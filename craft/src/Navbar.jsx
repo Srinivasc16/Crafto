@@ -29,26 +29,18 @@ const Navbar = () => {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const storedUser = localStorage.getItem("username");
-                const storedMail = localStorage.getItem("useremail");
-                const storedUid = localStorage.getItem("Userid");
-
-                if (storedUid) {
-                    const response = await axios.get(`http://localhost:8080/api/user/${storedUid}`);
-                    setUser(response.data);
-                    console.log(storedUid);
-                } else if (storedUser) {
-                    setUser({ name: storedUser, email: storedMail });
-                    console.log(storedUid);
-                }
-            } catch (error) {
-                console.error("Failed to fetch user:", error);
+                const response = await fetch("http://localhost:8080/api/user", {
+                    credentials: "include"
+                });
+                const data = await response.json();
+                setUser(data);
+            } catch (err) {
+                console.log("User not logged in.");
             }
         };
 
         fetchUser();
     }, []);
-
 
     const getUserInitials = (name) => {
         if (!name) return "U";
@@ -80,14 +72,21 @@ const Navbar = () => {
         return "py-4 bg-transparent";
     };
 
-    const handleSignOut = () => {
-        localStorage.removeItem("username");
-        localStorage.removeItem("useremail");
-        localStorage.removeItem("userid");
-        setUser(null);
-        setUserMenuOpen(false);
-        navigate("/");
+    const handleSignOut = async () => {
+        try {
+            await fetch("http://localhost:8080/api/user/logout", {
+                method: "POST",
+                credentials: "include", // important for session cookies
+            });
+
+            setUser(null);             // Clear user state
+            setUserMenuOpen(false);   // Close menu if open
+            navigate("/");            // Redirect to home or login page
+        } catch (error) {
+            console.error("Error during logout:", error);
+        }
     };
+
 
     let userid=localStorage.getItem("userid");
     return (

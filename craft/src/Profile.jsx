@@ -34,9 +34,22 @@ const ProfilePage = () => {
     const [orders, setOrders] = useState([]);
 
     useEffect(() => {
-        // Fetch profile data by UID
         const fetchProfile = async () => {
             try {
+                // Step 1: Get user from session
+                const userRes = await fetch("http://localhost:8080/api/user", {
+                    credentials: "include"
+                });
+
+                if (!userRes.ok) {
+                    console.log("No active user session found.");
+                    return;
+                }
+
+                const userData = await userRes.json();
+                const uid = userData.uid;
+
+                // Step 2: Fetch profile using UID
                 const res = await fetch(`http://localhost:8080/api/profile/${uid}`);
                 if (res.ok) {
                     const data = await res.json();
@@ -48,6 +61,8 @@ const ProfilePage = () => {
                         bio: data.details || "",
                         avatarUrl: data.avatarUrl || ""
                     }));
+                } else {
+                    console.log("Profile not found for UID:", uid);
                 }
             } catch (error) {
                 console.error("Error fetching profile:", error);
@@ -56,7 +71,9 @@ const ProfilePage = () => {
             }
         };
 
-        const fetchAddresses = async () => {
+
+
+    const fetchAddresses = async () => {
             try {
                 const res = await fetch(`http://localhost:8080/api/address/${uid}`);
                 if (res.ok) {

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { ShoppingCart, Star, ArrowRight, Truck, Shield, RefreshCw, ChevronRight, Instagram, Facebook, Twitter, Heart, Eye, Clock, Check, Package, CreditCard } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { X } from "lucide-react";
 
 const Home = () => {
     const [products, setProducts] = useState([]);
@@ -128,6 +129,61 @@ const Home = () => {
             ...prev,
             [productId]: !prev[productId]
         }));
+    };
+    const [activePopup, setActivePopup] = useState(null);
+
+    const openPopup = (popupId) => {
+        setActivePopup(popupId);
+    };
+
+    const closePopup = () => {
+        setActivePopup(null);
+    };
+    const popupContent = {
+        shipping: {
+            title: "Our Shipping Promise",
+            content: (
+                <div className="space-y-4">
+                    <p>At Crafto, we believe your handcrafted treasures should reach you quickly and safely. Our shipping practices are designed with both convenience and sustainability in mind.</p>
+
+                    <h4 className="font-bold text-lg mt-4">Express Shipping</h4>
+                    <p>All orders above ₹999 qualify for free express shipping, with delivery within 2-3 business days across major cities in India.</p>
+
+                    <h4 className="font-bold text-lg mt-4">Real-time Tracking</h4>
+                    <p>Follow your order's journey from our warehouse to your doorstep with our advanced tracking system. Receive timely SMS and email updates at every step.</p>
+                </div>
+            )
+        },
+        artisans: {
+            title: "The Artisans Behind Crafto",
+            content: (
+                <div className="space-y-4">
+                    <p>Our network of 2000+ skilled artisans across India forms the heart of Crafto. Each product tells a story of tradition, skill, and cultural heritage.</p>
+
+                    <h4 className="font-bold text-lg mt-4">Fair Trade Commitment</h4>
+                    <p>We ensure artisans receive fair compensation for their work through transparent pricing. Up to 70% of the product price goes directly to the creator.</p>
+
+                    <h4 className="font-bold text-lg mt-4">Artisan Communities</h4>
+                    <p>From the woodcarvers of Saharanpur to the weavers of Kanchipuram, our platform connects you to diverse craft communities across India.</p>
+
+                </div>
+            )
+        },
+        policies: {
+            title: "Our Customer Policies",
+            content: (
+                <div className="space-y-4">
+                    <p>Shopping at Crafto comes with peace of mind. Our customer-first policies ensure you have a satisfying experience with every purchase.</p>
+
+                    <h4 className="font-bold text-lg mt-4">15-Day Returns</h4>
+                    <p>If you're not completely satisfied with your purchase, return it within 15 days for a full refund or exchange. We cover the return shipping costs for any product defects.</p>
+
+                    <h4 className="font-bold text-lg mt-4">Secure Payments</h4>
+                    <p>Our payment gateway uses industry-leading encryption and 3D authentication to keep your financial information safe. We support all major credit cards, UPI, and digital wallets.</p>
+
+                </div>
+            )
+        }
     };
 
     // Testimonials data
@@ -319,7 +375,7 @@ const Home = () => {
             <section className="py-20 bg-black text-white">
                 <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center">
                     <div className="md:w-1/2 mb-10 md:mb-0">
-                        <img src="/api/placeholder/600/400" alt="Feature product" className="rounded-lg shadow-2xl"/>
+                        <img src="https://images.pexels.com/photos/1084406/pexels-photo-1084406.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Feature product" className="rounded-lg shadow-2xl"/>
                     </div>
                     <div className="md:w-1/2 md:pl-12">
                         <span className="inline-block px-4 py-1 bg-white/20 rounded-full text-sm font-medium mb-4">New Arrival</span>
@@ -338,117 +394,203 @@ const Home = () => {
             </section>
 
             {/* Enhanced Why Choose Us */}
-            <section id="features" className="py-24 bg-white">
+            <section id="features" className="py-24 bg-white relative">
                 <div className="max-w-7xl mx-auto px-4">
                     <div className="text-center mb-16">
-                        <span className="bg-orange-100 text-orange-600 px-4 py-1 rounded-full text-sm font-medium">Our Promise</span>
-                        <h2 className="text-4xl font-bold text-gray-800 mt-4 mb-4">The ArtisanBazaar Experience</h2>
+          <span className="bg-orange-100 text-orange-600 px-4 py-1 rounded-full text-sm font-medium">
+            Our Promise
+          </span>
+                        <h2 className="text-4xl font-bold text-gray-800 mt-4 mb-4">
+                            The Crafto Experience
+                        </h2>
                         <p className="text-gray-600 max-w-2xl mx-auto">
                             We're not just an online store - we're a bridge between traditional craftsmanship and modern
-                            living.
-                            Here's what makes shopping with us special.
+                            living. Here's what makes shopping with us special.
                         </p>
                     </div>
 
                     <div className="grid lg:grid-cols-3 gap-10">
                         {/* Card 1 */}
-                        <div
-                            className="reveal bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:shadow-xl transition duration-300 hover:bg-orange-50">
+                        <div className="reveal bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:shadow-xl transition duration-300 hover:bg-orange-50">
                             <div className="bg-orange-100 rounded-full w-16 h-16 flex items-center justify-center mb-6">
-                                <Truck className="text-orange-600" size={28}/>
+                                <Truck className="text-orange-600" size={28} />
                             </div>
-                            <h3 className="text-2xl font-bold text-gray-800 mb-4">Seamless Delivery</h3>
+                            <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                                Seamless Delivery
+                            </h3>
                             <ul className="space-y-3">
                                 <li className="flex items-start">
-                                    <Check size={18} className="text-green-500 mr-2 mt-1 flex-shrink-0"/>
-                                    <span className="text-gray-600">Free express shipping on orders over ₹999</span>
+                                    <Check
+                                        size={18}
+                                        className="text-green-500 mr-2 mt-1 flex-shrink-0"
+                                    />
+                                    <span className="text-gray-600">
+                  Free express shipping on orders over ₹999
+                </span>
                                 </li>
                                 <li className="flex items-start">
-                                    <Check size={18} className="text-green-500 mr-2 mt-1 flex-shrink-0"/>
+                                    <Check
+                                        size={18}
+                                        className="text-green-500 mr-2 mt-1 flex-shrink-0"
+                                    />
                                     <span className="text-gray-600">Real-time order tracking</span>
                                 </li>
                                 <li className="flex items-start">
-                                    <Check size={18} className="text-green-500 mr-2 mt-1 flex-shrink-0"/>
-                                    <span className="text-gray-600">Carbon-neutral delivery options</span>
+                                    <Check
+                                        size={18}
+                                        className="text-green-500 mr-2 mt-1 flex-shrink-0"
+                                    />
+                                    <span className="text-gray-600">
+                  Carbon-neutral delivery options
+                </span>
                                 </li>
                             </ul>
                             <div className="mt-6 pt-6 border-t border-gray-200">
-                                <a href="#"
-                                   className="text-orange-600 font-medium hover:text-orange-700 inline-flex items-center">
-                                    Learn more about shipping <ChevronRight size={16} className="ml-1"/>
-                                </a>
+                                <button
+                                    onClick={() => openPopup("shipping")}
+                                    className="text-orange-600 font-medium hover:text-orange-700 inline-flex items-center"
+                                >
+                                    Learn more about shipping <ChevronRight size={16} className="ml-1" />
+                                </button>
                             </div>
                         </div>
 
                         {/* Card 2 */}
-                        <div
-                            className="reveal bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:shadow-xl transition duration-300 hover:bg-orange-50">
+                        <div className="reveal bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:shadow-xl transition duration-300 hover:bg-orange-50">
                             <div className="bg-orange-100 rounded-full w-16 h-16 flex items-center justify-center mb-6">
-                                <Package className="text-orange-600" size={28}/>
+                                <Package className="text-orange-600" size={28} />
                             </div>
-                            <h3 className="text-2xl font-bold text-gray-800 mb-4">Artisan Support</h3>
+                            <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                                Our Support
+                            </h3>
                             <ul className="space-y-3">
                                 <li className="flex items-start">
-                                    <Check size={18} className="text-green-500 mr-2 mt-1 flex-shrink-0"/>
-                                    <span className="text-gray-600">Fair trade practices with transparent pricing</span>
+                                    <Check
+                                        size={18}
+                                        className="text-green-500 mr-2 mt-1 flex-shrink-0"
+                                    />
+                                    <span className="text-gray-600">
+                  Fair trade practices with transparent pricing
+                </span>
                                 </li>
                                 <li className="flex items-start">
-                                    <Check size={18} className="text-green-500 mr-2 mt-1 flex-shrink-0"/>
-                                    <span className="text-gray-600">Direct support to 2000+ artisans across India</span>
+                                    <Check
+                                        size={18}
+                                        className="text-green-500 mr-2 mt-1 flex-shrink-0"
+                                    />
+                                    <span className="text-gray-600">
+                  Direct support to 2000+ artisans across India
+                </span>
                                 </li>
                                 <li className="flex items-start">
-                                    <Check size={18} className="text-green-500 mr-2 mt-1 flex-shrink-0"/>
-                                    <span className="text-gray-600">5% of profits fund artisan welfare programs</span>
+                                    <Check
+                                        size={18}
+                                        className="text-green-500 mr-2 mt-1 flex-shrink-0"
+                                    />
+                                    <span className="text-gray-600">
+                  5% of profits fund artisan welfare programs
+                </span>
                                 </li>
                             </ul>
                             <div className="mt-6 pt-6 border-t border-gray-200">
-                                <a href="#"
-                                   className="text-orange-600 font-medium hover:text-orange-700 inline-flex items-center">
-                                    Meet our artisans <ChevronRight size={16} className="ml-1"/>
-                                </a>
+                                <button
+                                    onClick={() => openPopup("artisans")}
+                                    className="text-orange-600 font-medium hover:text-orange-700 inline-flex items-center"
+                                >
+                                    Meet our artisans <ChevronRight size={16} className="ml-1" />
+                                </button>
                             </div>
                         </div>
 
                         {/* Card 3 */}
-                        <div
-                            className="reveal bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:shadow-xl transition duration-300 hover:bg-orange-50">
+                        <div className="reveal bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:shadow-xl transition duration-300 hover:bg-orange-50">
                             <div className="bg-orange-100 rounded-full w-16 h-16 flex items-center justify-center mb-6">
-                                <CreditCard className="text-orange-600" size={28}/>
+                                <CreditCard className="text-orange-600" size={28} />
                             </div>
-                            <h3 className="text-2xl font-bold text-gray-800 mb-4">Worry-Free Shopping</h3>
+                            <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                                Worry-Free Shopping
+                            </h3>
                             <ul className="space-y-3">
                                 <li className="flex items-start">
-                                    <Check size={18} className="text-green-500 mr-2 mt-1 flex-shrink-0"/>
-                                    <span className="text-gray-600">15-day no-questions-asked returns</span>
+                                    <Check
+                                        size={18}
+                                        className="text-green-500 mr-2 mt-1 flex-shrink-0"
+                                    />
+                                    <span className="text-gray-600">
+                  15-day no-questions-asked returns
+                </span>
                                 </li>
                                 <li className="flex items-start">
-                                    <Check size={18} className="text-green-500 mr-2 mt-1 flex-shrink-0"/>
-                                    <span className="text-gray-600">Secure payment with 3D authentication</span>
+                                    <Check
+                                        size={18}
+                                        className="text-green-500 mr-2 mt-1 flex-shrink-0"
+                                    />
+                                    <span className="text-gray-600">
+                  Secure payment with 3D authentication
+                </span>
                                 </li>
                                 <li className="flex items-start">
-                                    <Check size={18} className="text-green-500 mr-2 mt-1 flex-shrink-0"/>
-                                    <span className="text-gray-600">Quality guarantee on all products</span>
+                                    <Check
+                                        size={18}
+                                        className="text-green-500 mr-2 mt-1 flex-shrink-0"
+                                    />
+                                    <span className="text-gray-600">
+                  Quality guarantee on all products
+                </span>
                                 </li>
                             </ul>
                             <div className="mt-6 pt-6 border-t border-gray-200">
-                                <a href="#"
-                                   className="text-orange-600 font-medium hover:text-orange-700 inline-flex items-center">
-                                    View our policies <ChevronRight size={16} className="ml-1"/>
-                                </a>
+                                <button
+                                    onClick={() => openPopup("policies")}
+                                    className="text-orange-600 font-medium hover:text-orange-700 inline-flex items-center"
+                                >
+                                    View our policies <ChevronRight size={16} className="ml-1" />
+                                </button>
                             </div>
                         </div>
                     </div>
 
                     <div className="mt-16 text-center">
                         <div className="inline-flex items-center p-1 bg-gray-100 rounded-full">
-                            <div
-                                className="bg-orange-100 text-orange-600 rounded-full px-4 py-2 text-sm font-medium">4.8/5
+                            <div className="bg-orange-100 text-orange-600 rounded-full px-4 py-2 text-sm font-medium">
+                                4.8/5
                             </div>
-                            <div className="px-4 text-gray-700 font-medium">Rated excellent by 10,000+ happy customers
+                            <div className="px-4 text-gray-700 font-medium">
+                                Rated excellent by 10,000+ happy customers
                             </div>
                         </div>
                     </div>
                 </div>
+
+                {/* Popup Modal */}
+                {activePopup && (
+                    <div className="fixed inset-0 bg-black pt-10 border-2 border-black overflow-auto bg-opacity-50 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl max-w-2xl w-full max-h-90vh overflow-y-auto">
+                            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                                <h3 className="text-2xl font-bold text-gray-800">
+                                    {popupContent[activePopup].title}
+                                </h3>
+                                <button
+                                    onClick={closePopup}
+                                    className="text-gray-400 hover:text-gray-600 transition"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <div className="p-6">
+                                {popupContent[activePopup].content}
+                            </div>
+                            <div className="p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+                                <button
+                                    onClick={closePopup}
+                                    className="bg-orange-600 hover:bg-orange-700 text-white py-2 px-6 rounded-full font-medium transition"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </section>
 
             {/* Testimonials */}
@@ -484,33 +626,6 @@ const Home = () => {
                             </div>
                         ))}
                     </div>
-                </div>
-            </section>
-
-            {/* Newsletter */}
-            <section className="py-20 bg-gradient-to-r from-orange-50 to-orange-100">
-                <div className="max-w-4xl mx-auto px-4 text-center">
-                    <h2 className="text-3xl font-bold text-gray-800 mb-4">Join Our Community</h2>
-                    <p className="text-gray-600 mb-8">
-                        Subscribe to our newsletter for exclusive offers, new arrivals, and artisan stories.
-                    </p>
-                    <form onSubmit={handleSubscribe}
-                          className="flex flex-col sm:flex-row justify-center gap-4 max-w-md mx-auto">
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Enter your email"
-                            className="px-5 py-3 rounded-full w-full text-gray-800 shadow-md outline-none focus:ring-2 focus:ring-orange-300"
-                            required
-                        />
-                        <button
-                            type="submit"
-                            className="px-6 py-3 bg-orange-500 text-white font-semibold rounded-full hover:bg-orange-600 transition"
-                        >
-                            Subscribe
-                        </button>
-                    </form>
                 </div>
             </section>
         </div>

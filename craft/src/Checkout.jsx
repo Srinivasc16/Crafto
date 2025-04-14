@@ -1,5 +1,5 @@
 import {useLocation, useNavigate} from "react-router-dom";
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import { ChevronDown, ChevronUp, CreditCard, Smartphone, DollarSign, ShoppingBag, Lock, AlertCircle } from 'lucide-react';
 import axios from 'axios'; // Import axios for making HTTP requests
 
@@ -22,7 +22,6 @@ const Checkout = () => {
         zipcode: "",
     });
 
-    const uid = "w8QILCENGbOqdeTwrSghWOVbeU33";
     const [formData, setFormData] = useState({
         fullName: "",
         phone: "",
@@ -185,27 +184,49 @@ const Checkout = () => {
             }
         }
     };
+    // Replace the hardcoded uid and useEffect for fetching addresses with this:
+    const [uid, setUid] = useState(null);
+
     useEffect(() => {
-        const fetchAddresses = async () => {
+        const fetchUserAndAddresses = async () => {
             try {
-                const res = await fetch(`http://localhost:8080/api/address/${uid}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    const formatted = Array.isArray(data) ? data : [data]; // handle single or array response
-                    setAddresses(formatted.map((a, index) => ({
-                        ...a,
-                        id: index + 1, // Assuming an id field is not provided by the backend
-                        isDefault: index === 0, // Set the first address as default
-                    })));
+                // Step 1: Get user from session
+                const userRes = await fetch("http://localhost:8080/api/user", {
+                    credentials: "include"
+                });
+
+                if (!userRes.ok) {
+                    console.log("No active user session found.");
+                    return;
+                }
+
+                const userData = await userRes.json();
+                setUid(userData.uid);
+
+                // Step 2: Fetch addresses for the user
+                if (userData.uid) {
+                    const addressRes = await fetch(`http://localhost:8080/api/address/${userData.uid}`, {
+                        credentials: "include"
+                    });
+
+                    if (addressRes.ok) {
+                        const data = await addressRes.json();
+                        const formatted = Array.isArray(data) ? data : [data]; // handle single or array response
+                        setAddresses(formatted.map((a, index) => ({
+                            ...a,
+                            id: index + 1, // Assuming an id field is not provided by the backend
+                            isDefault: index === 0, // Set the first address as default
+                        })));
+                    }
                 }
             } catch (error) {
-                console.error("Error fetching address:", error);
+                console.error("Error fetching user or addresses:", error);
                 setAddresses([]); // Fallback to an empty list
             }
         };
 
-        fetchAddresses();
-    }, [uid]);
+        fetchUserAndAddresses();
+    }, []); // Empty dependency array means this runs once on component mount
 
     const handleSelectAddress = (address) => {
         setSelectedAddress(address);
@@ -274,8 +295,10 @@ const Checkout = () => {
                         <div className="bg-gray-50 p-5 rounded-lg shadow-sm border border-gray-200">
                             <h3 className="text-xl font-semibold text-gray-800 mb-4">Order Summary</h3>
 
-                            <div className="flex items-center space-x-4 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-                                <div className="w-24 h-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
+                            <div
+                                className="flex items-center space-x-4 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+                                <div
+                                    className="w-24 h-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
                                     <img
                                         src={product.image}
                                         alt={product.name}
@@ -318,287 +341,445 @@ const Checkout = () => {
                             </div>
                         </div>
                     </div>
-                    <div>
-                        <div className="bg-gray-50 mb-6 rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                            <button
-                                type="button" // Specify type=button to prevent form submission
-                                onClick={toggleShipping}
-                                className="w-full flex items-center justify-between p-5 text-left focus:outline-none hover:bg-orange-50 transition-colors duration-300"
-                            >
-                                <h3 className="text-xl font-semibold text-gray-800">Shipping Details</h3>
-                                {isShippingOpen ? <ChevronUp className="h-5 w-5 text-orange-500"/> :
-                                    <ChevronDown className="h-5 w-5 text-orange-500"/>}
-                            </button>
+                    <div className="bg-gray-50 mb-6 rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                        <button
+                            type="button" // Specify type=button to prevent form submission
+                            onClick={toggleShipping}
+                            className="w-full flex items-center justify-between p-5 text-left focus:outline-none hover:bg-orange-50 transition-colors duration-300"
+                        >
+                            <h3 className="text-xl font-semibold text-gray-800">Shipping Details</h3>
+                            {isShippingOpen ? <ChevronUp className="h-5 w-5 text-orange-500"/> :
+                                <ChevronDown className="h-5 w-5 text-orange-500"/>}
+                        </button>
 
-                            {isShippingOpen && (
-                                <div className="p-5 pt-0 border-t border-gray-200">
-                                    <div className="space-y-4 mt-3">
-                                        <div className={errors.fullName ? "error-field" : ""}>
-                                            <label htmlFor="fullName"
-                                                   className="block text-sm font-medium text-gray-700 mb-1">Full
-                                                Name</label>
-                                            <input
-                                                type="text"
-                                                id="fullName"
-                                                value={formData.fullName}
-                                                onChange={handleInputChange}
-                                                className={`w-full px-4 py-2 border ${errors.fullName ? "border-red-500 bg-red-50" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm`}
-                                                placeholder="John Doe"
-                                            />
-                                            {errors.fullName && (
-                                                <p className="mt-1 text-sm text-red-600 flex items-center">
-                                                    <AlertCircle className="h-4 w-4 mr-1" /> {errors.fullName}
-                                                </p>
-                                            )}
+                        {isShippingOpen && (
+                            <div className="p-5 pt-0 border-t border-gray-200">
+                                <div className="space-y-4 mt-3">
+                                    {/* Saved Addresses Section */}
+                                    <div className="mb-3">
+                                        <h4 className="text-md font-medium text-gray-700 mb-2">Saved Addresses</h4>
+
+                                        {addresses.length > 0 ? (
+                                            <div className="space-y-3">
+                                                {addresses.map((address) => (
+                                                    <div
+                                                        key={address.id}
+                                                        className={`p-3 border rounded-md cursor-pointer transition-all
+                                                ${formData.address === `${address.street}, ${address.city}, ${address.state} ${address.zipcode}`
+                                                            ? 'border-orange-500 bg-orange-50'
+                                                            : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50'}`}
+                                                        onClick={() => {
+                                                            setFormData({
+                                                                ...formData,
+                                                                address: `${address.street}, ${address.city}, ${address.state} ${address.zipcode}`
+                                                            });
+                                                        }}
+                                                    >
+                                                        <div className="flex justify-between">
+                                                            <p className="font-medium text-gray-800">{address.street}</p>
+                                                            {address.isDefault && (
+                                                                <span
+                                                                    className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">Default</span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-sm text-gray-600 mt-1">{address.city}, {address.state} {address.zipcode}</p>
+                                                        <div className="flex justify-end mt-2 space-x-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleSelectAddress(address);
+                                                                }}
+                                                                className="text-xs text-blue-600 hover:text-blue-800"
+                                                            >
+                                                                Edit
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div
+                                                className="text-center p-4 border border-dashed border-gray-300 rounded-md bg-gray-50">
+                                                <p className="text-sm text-gray-500">No saved addresses found.</p>
+                                            </div>
+                                        )}
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setEditMode(true);
+                                                setSelectedAddress(null);
+                                                setFormxData({
+                                                    street: "",
+                                                    city: "",
+                                                    state: "",
+                                                    zipcode: "",
+                                                    country: "India",
+                                                    isDefault: false
+                                                });
+                                            }}
+                                            className="mt-3 text-sm text-orange-600 hover:text-orange-800 flex items-center"
+                                        >
+                                            <span className="mr-1">+</span> Add new address
+                                        </button>
+                                    </div>
+
+                                    {/* Address Edit Form */}
+                                    {editMode && (
+                                        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-4">
+                                            <h4 className="text-md font-medium text-gray-800 mb-3">
+                                                {selectedAddress ? "Edit Address" : "Add New Address"}
+                                            </h4>
+
+                                            <div className="space-y-3">
+                                                <div>
+                                                    <label htmlFor="street"
+                                                           className="block text-sm font-medium text-gray-700 mb-1">Street
+                                                        Address</label>
+                                                    <input
+                                                        type="text"
+                                                        name="street"
+                                                        id="street"
+                                                        value={formxData.street}
+                                                        onChange={handleEditChange}
+                                                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm"
+                                                        placeholder="123 Main St"
+                                                    />
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label htmlFor="city"
+                                                               className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                                        <input
+                                                            type="text"
+                                                            name="city"
+                                                            id="city"
+                                                            value={formxData.city}
+                                                            onChange={handleEditChange}
+                                                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm"
+                                                            placeholder="Mumbai"
+                                                        />
+                                                    </div>
+
+                                                    <div>
+                                                        <label htmlFor="state"
+                                                               className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                                                        <input
+                                                            type="text"
+                                                            name="state"
+                                                            id="state"
+                                                            value={formxData.state}
+                                                            onChange={handleEditChange}
+                                                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm"
+                                                            placeholder="Maharashtra"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label htmlFor="zipcode"
+                                                               className="block text-sm font-medium text-gray-700 mb-1">Zip
+                                                            Code</label>
+                                                        <input
+                                                            type="text"
+                                                            name="zipcode"
+                                                            id="zipcode"
+                                                            value={formxData.zipcode}
+                                                            onChange={handleEditChange}
+                                                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm"
+                                                            placeholder="400001"
+                                                        />
+                                                    </div>
+
+                                                    <div>
+                                                        <label htmlFor="country"
+                                                               className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                                                        <select
+                                                            name="country"
+                                                            id="country"
+                                                            value={formxData.country || "India"}
+                                                            onChange={handleEditChange}
+                                                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm"
+                                                        >
+                                                            <option value="India">India</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center mt-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="isDefault"
+                                                        id="isDefault"
+                                                        checked={formxData.isDefault}
+                                                        onChange={(e) => setFormxData({
+                                                            ...formxData,
+                                                            isDefault: e.target.checked
+                                                        })}
+                                                        className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                                                    />
+                                                    <label htmlFor="isDefault"
+                                                           className="ml-2 block text-sm text-gray-700">
+                                                        Set as default address
+                                                    </label>
+                                                </div>
+
+                                                <div className="flex justify-end space-x-3 mt-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleCancelEdit}
+                                                        className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleSaveAddress}
+                                                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                                                    >
+                                                        Save Address
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className={errors.phone ? "error-field" : ""}>
-                                            <label htmlFor="phone"
-                                                   className="block text-sm font-medium text-gray-700 mb-1">Phone
+                                    )}
+
+                                    <div className={errors.address ? "error-field" : ""}>
+                                        <label htmlFor="address"
+                                               className="block text-sm font-medium text-gray-700 mb-1">Shipping
+                                            Address</label>
+                                        <textarea
+                                            id="address"
+                                            rows="3"
+                                            value={formData.address}
+                                            onChange={handleInputChange}
+                                            className={`w-full px-4 py-2 border ${errors.address ? "border-red-500 bg-red-50" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm`}
+                                            placeholder="Enter your full address"
+                                        ></textarea>
+                                        {errors.address && (
+                                            <p className="mt-1 text-sm text-red-600 flex items-center">
+                                                <AlertCircle className="h-4 w-4 mr-1"/> {errors.address}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    <div className="bg-gray-50 rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                        <button
+                            type="button" // Specify type=button to prevent form submission
+                            onClick={togglePayment}
+                            className="w-full flex items-center justify-between p-5 text-left focus:outline-none hover:bg-orange-50 transition-colors duration-300"
+                        >
+                            <h3 className="text-xl font-semibold text-gray-800">Payment Method</h3>
+                            {isPaymentOpen ? <ChevronUp className="h-5 w-5 text-orange-500"/> :
+                                <ChevronDown className="h-5 w-5 text-orange-500"/>}
+                        </button>
+
+                        {isPaymentOpen && (
+                            <div className="p-5 pt-0 border-t border-gray-200">
+                                <div className="mb-6">
+                                    <div className="grid grid-cols-3 mt-3 gap-2">
+                                        <div
+                                            className={`border rounded-md p-3 flex flex-col items-center cursor-pointer transition-all hover:shadow-md ${paymentMethod === "card" ? "border-orange-500 bg-orange-50 shadow-md" : "border-gray-200 hover:border-orange-300 hover:bg-orange-50"}`}
+                                            onClick={() => setPaymentMethod("card")}
+                                        >
+                                            <CreditCard className="h-6 w-6 text-orange-500 mb-1"/>
+                                            <span className="text-xs font-medium text-gray-700">Card</span>
+                                        </div>
+
+                                        <div
+                                            className={`border rounded-md p-3 flex flex-col items-center cursor-pointer transition-all hover:shadow-md ${paymentMethod === "upi" ? "border-orange-500 bg-orange-50 shadow-md" : "border-gray-200 hover:border-orange-300 hover:bg-orange-50"}`}
+                                            onClick={() => setPaymentMethod("upi")}
+                                        >
+                                            <Smartphone className="h-6 w-6 text-orange-500 mb-1"/>
+                                            <span className="text-xs font-medium text-gray-700">UPI</span>
+                                        </div>
+
+                                        <div
+                                            className={`border rounded-md p-3 flex flex-col items-center cursor-pointer transition-all hover:shadow-md ${paymentMethod === "cod" ? "border-orange-500 bg-orange-50 shadow-md" : "border-gray-200 hover:border-orange-300 hover:bg-orange-50"}`}
+                                            onClick={() => setPaymentMethod("cod")}
+                                        >
+                                            <DollarSign className="h-6 w-6 text-orange-500 mb-1"/>
+                                            <span className="text-xs font-medium text-gray-700">Cash</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {paymentMethod === "card" && (
+                                    <div
+                                        className="space-y-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                                        <div className={errors.cardNumber ? "error-field" : ""}>
+                                            <label htmlFor="cardNumber"
+                                                   className="block text-sm font-medium text-gray-700 mb-1">Card
                                                 Number</label>
                                             <input
                                                 type="text"
-                                                id="phone"
-                                                value={formData.phone}
+                                                id="cardNumber"
+                                                value={formData.cardNumber}
                                                 onChange={handleInputChange}
-                                                className={`w-full px-4 py-2 border ${errors.phone ? "border-red-500 bg-red-50" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm`}
-                                                placeholder="+91 98765 43210"
+                                                className={`w-full px-4 py-2 border ${errors.cardNumber ? "border-red-500 bg-red-50" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm`}
+                                                placeholder="1234 5678 9012 3456"
                                             />
-                                            {errors.phone && (
+                                            {errors.cardNumber && (
                                                 <p className="mt-1 text-sm text-red-600 flex items-center">
-                                                    <AlertCircle className="h-4 w-4 mr-1" /> {errors.phone}
+                                                    <AlertCircle className="h-4 w-4 mr-1"/> {errors.cardNumber}
                                                 </p>
                                             )}
                                         </div>
-                                        <div className={errors.address ? "error-field" : ""}>
-                                            <label htmlFor="address"
-                                                   className="block text-sm font-medium text-gray-700 mb-1">Shipping
-                                                Address</label>
-                                            <textarea
-                                                id="address"
-                                                rows="3"
-                                                value={formData.address}
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className={errors.expiryDate ? "error-field" : ""}>
+                                                <label htmlFor="expiryDate"
+                                                       className="block text-sm font-medium text-gray-700 mb-1">Expiry
+                                                    Date</label>
+                                                <input
+                                                    type="text"
+                                                    id="expiryDate"
+                                                    value={formData.expiryDate}
+                                                    onChange={handleInputChange}
+                                                    className={`w-full px-4 py-2 border ${errors.expiryDate ? "border-red-500 bg-red-50" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm`}
+                                                    placeholder="MM/YY"
+                                                />
+                                                {errors.expiryDate && (
+                                                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                                                        <AlertCircle className="h-4 w-4 mr-1"/> {errors.expiryDate}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className={errors.cvv ? "error-field" : ""}>
+                                                <label htmlFor="cvv"
+                                                       className="block text-sm font-medium text-gray-700 mb-1">CVV</label>
+                                                <input
+                                                    type="text"
+                                                    id="cvv"
+                                                    value={formData.cvv}
+                                                    onChange={handleInputChange}
+                                                    className={`w-full px-4 py-2 border ${errors.cvv ? "border-red-500 bg-red-50" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm`}
+                                                    placeholder="123"
+                                                />
+                                                {errors.cvv && (
+                                                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                                                        <AlertCircle className="h-4 w-4 mr-1"/> {errors.cvv}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {paymentMethod === "upi" && (
+                                    <div
+                                        className="text-center p-6 border border-gray-200 rounded-lg bg-white shadow-sm">
+                                        <div
+                                            className="inline-flex items-center justify-center w-16 h-16 bg-orange-50 rounded-full mb-4 border border-orange-100">
+                                            <Smartphone className="h-8 w-8 text-orange-500"/>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mb-3">Pay using UPI</p>
+                                        <div className={`mb-4 ${errors.upiId ? "error-field" : ""}`}>
+                                            <input
+                                                type="text"
+                                                id="upiId"
+                                                value={formData.upiId}
                                                 onChange={handleInputChange}
-                                                className={`w-full px-4 py-2 border ${errors.address ? "border-red-500 bg-red-50" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm`}
-                                                placeholder="Enter your full address"
-                                            ></textarea>
-                                            {errors.address && (
+                                                className={`w-full px-4 py-2 border ${errors.upiId ? "border-red-500 bg-red-50" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm`}
+                                                placeholder="Enter UPI ID (e.g., name@upi)"
+                                            />
+                                            {errors.upiId && (
                                                 <p className="mt-1 text-sm text-red-600 flex items-center">
-                                                    <AlertCircle className="h-4 w-4 mr-1" /> {errors.address}
+                                                    <AlertCircle className="h-4 w-4 mr-1"/> {errors.upiId}
                                                 </p>
                                             )}
                                         </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                        <div className="bg-gray-50 rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                            <button
-                                type="button" // Specify type=button to prevent form submission
-                                onClick={togglePayment}
-                                className="w-full flex items-center justify-between p-5 text-left focus:outline-none hover:bg-orange-50 transition-colors duration-300"
-                            >
-                                <h3 className="text-xl font-semibold text-gray-800">Payment Method</h3>
-                                {isPaymentOpen ? <ChevronUp className="h-5 w-5 text-orange-500"/> :
-                                    <ChevronDown className="h-5 w-5 text-orange-500"/>}
-                            </button>
+                                )}
 
-                            {isPaymentOpen && (
-                                <div className="p-5 pt-0 border-t border-gray-200">
-                                    <div className="mb-6">
-                                        <div className="grid grid-cols-3 mt-3 gap-2">
-                                            <div
-                                                className={`border rounded-md p-3 flex flex-col items-center cursor-pointer transition-all hover:shadow-md ${paymentMethod === "card" ? "border-orange-500 bg-orange-50 shadow-md" : "border-gray-200 hover:border-orange-300 hover:bg-orange-50"}`}
-                                                onClick={() => setPaymentMethod("card")}
-                                            >
-                                                <CreditCard className="h-6 w-6 text-orange-500 mb-1"/>
-                                                <span className="text-xs font-medium text-gray-700">Card</span>
-                                            </div>
-
-                                            <div
-                                                className={`border rounded-md p-3 flex flex-col items-center cursor-pointer transition-all hover:shadow-md ${paymentMethod === "upi" ? "border-orange-500 bg-orange-50 shadow-md" : "border-gray-200 hover:border-orange-300 hover:bg-orange-50"}`}
-                                                onClick={() => setPaymentMethod("upi")}
-                                            >
-                                                <Smartphone className="h-6 w-6 text-orange-500 mb-1"/>
-                                                <span className="text-xs font-medium text-gray-700">UPI</span>
-                                            </div>
-
-                                            <div
-                                                className={`border rounded-md p-3 flex flex-col items-center cursor-pointer transition-all hover:shadow-md ${paymentMethod === "cod" ? "border-orange-500 bg-orange-50 shadow-md" : "border-gray-200 hover:border-orange-300 hover:bg-orange-50"}`}
-                                                onClick={() => setPaymentMethod("cod")}
-                                            >
-                                                <DollarSign className="h-6 w-6 text-orange-500 mb-1"/>
-                                                <span className="text-xs font-medium text-gray-700">Cash</span>
-                                            </div>
+                                {paymentMethod === "cod" && (
+                                    <div
+                                        className="text-center p-6 border border-gray-200 rounded-lg bg-white shadow-sm">
+                                        <div
+                                            className="inline-flex items-center justify-center w-16 h-16 bg-orange-50 rounded-full mb-4 border border-orange-100">
+                                            <DollarSign className="h-8 w-8 text-orange-500"/>
+                                        </div>
+                                        <h4 className="text-md font-medium text-gray-800 mb-2">Cash on Delivery</h4>
+                                        <p className="text-sm text-gray-600 mb-3">Pay with cash when your order is
+                                            delivered</p>
+                                        <div className="bg-orange-50 p-3 rounded-md border border-orange-100">
+                                            <p className="text-xs text-orange-700">
+                                                A small convenience fee of ₹19 will be added for Cash on Delivery
+                                                orders.
+                                            </p>
                                         </div>
                                     </div>
-
-                                    {paymentMethod === "card" && (
-                                        <div
-                                            className="space-y-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                                            <div className={errors.cardNumber ? "error-field" : ""}>
-                                                <label htmlFor="cardNumber"
-                                                       className="block text-sm font-medium text-gray-700 mb-1">Card
-                                                    Number</label>
-                                                <input
-                                                    type="text"
-                                                    id="cardNumber"
-                                                    value={formData.cardNumber}
-                                                    onChange={handleInputChange}
-                                                    className={`w-full px-4 py-2 border ${errors.cardNumber ? "border-red-500 bg-red-50" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm`}
-                                                    placeholder="1234 5678 9012 3456"
-                                                />
-                                                {errors.cardNumber && (
-                                                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                                                        <AlertCircle className="h-4 w-4 mr-1" /> {errors.cardNumber}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className={errors.expiryDate ? "error-field" : ""}>
-                                                    <label htmlFor="expiryDate"
-                                                           className="block text-sm font-medium text-gray-700 mb-1">Expiry
-                                                        Date</label>
-                                                    <input
-                                                        type="text"
-                                                        id="expiryDate"
-                                                        value={formData.expiryDate}
-                                                        onChange={handleInputChange}
-                                                        className={`w-full px-4 py-2 border ${errors.expiryDate ? "border-red-500 bg-red-50" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm`}
-                                                        placeholder="MM/YY"
-                                                    />
-                                                    {errors.expiryDate && (
-                                                        <p className="mt-1 text-sm text-red-600 flex items-center">
-                                                            <AlertCircle className="h-4 w-4 mr-1" /> {errors.expiryDate}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                                <div className={errors.cvv ? "error-field" : ""}>
-                                                    <label htmlFor="cvv"
-                                                           className="block text-sm font-medium text-gray-700 mb-1">CVV</label>
-                                                    <input
-                                                        type="text"
-                                                        id="cvv"
-                                                        value={formData.cvv}
-                                                        onChange={handleInputChange}
-                                                        className={`w-full px-4 py-2 border ${errors.cvv ? "border-red-500 bg-red-50" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm`}
-                                                        placeholder="123"
-                                                    />
-                                                    {errors.cvv && (
-                                                        <p className="mt-1 text-sm text-red-600 flex items-center">
-                                                            <AlertCircle className="h-4 w-4 mr-1" /> {errors.cvv}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {paymentMethod === "upi" && (
-                                        <div
-                                            className="text-center p-6 border border-gray-200 rounded-lg bg-white shadow-sm">
-                                            <div
-                                                className="inline-flex items-center justify-center w-16 h-16 bg-orange-50 rounded-full mb-4 border border-orange-100">
-                                                <Smartphone className="h-8 w-8 text-orange-500"/>
-                                            </div>
-                                            <p className="text-sm text-gray-600 mb-3">Pay using UPI</p>
-                                            <div className={`mb-4 ${errors.upiId ? "error-field" : ""}`}>
-                                                <input
-                                                    type="text"
-                                                    id="upiId"
-                                                    value={formData.upiId}
-                                                    onChange={handleInputChange}
-                                                    className={`w-full px-4 py-2 border ${errors.upiId ? "border-red-500 bg-red-50" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm`}
-                                                    placeholder="Enter UPI ID (e.g., name@upi)"
-                                                />
-                                                {errors.upiId && (
-                                                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                                                        <AlertCircle className="h-4 w-4 mr-1" /> {errors.upiId}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {paymentMethod === "cod" && (
-                                        <div
-                                            className="text-center p-6 border border-gray-200 rounded-lg bg-white shadow-sm">
-                                            <div
-                                                className="inline-flex items-center justify-center w-16 h-16 bg-orange-50 rounded-full mb-4 border border-orange-100">
-                                                <DollarSign className="h-8 w-8 text-orange-500"/>
-                                            </div>
-                                            <h4 className="text-md font-medium text-gray-800 mb-2">Cash on Delivery</h4>
-                                            <p className="text-sm text-gray-600 mb-3">Pay with cash when your order is
-                                                delivered</p>
-                                            <div className="bg-orange-50 p-3 rounded-md border border-orange-100">
-                                                <p className="text-xs text-orange-700">
-                                                    A small convenience fee of ₹19 will be added for Cash on Delivery
-                                                    orders.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                        {errors.submission && (
-                            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                                <p className="text-sm text-red-600 flex items-center">
-                                    <AlertCircle className="h-4 w-4 mr-1" /> {errors.submission}
-                                </p>
+                                )}
                             </div>
                         )}
-                        <div className="mt-6">
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className={`w-full ${isSubmitting ? 'bg-orange-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'} focus:ring-4 focus:ring-orange-200 text-white font-medium rounded-lg text-base px-5 py-3 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1 active:translate-y-0 active:shadow-md flex items-center justify-center`}
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        Processing...
-                                    </>
-                                ) : (
-                                    `${paymentMethod === "cod" ? "Place Order" : "Pay"} ₹${calculateTotal()}`
-                                )}
-                            </button>
-
-                            {paymentMethod === "cod" && (
-                                <p className="text-xs text-center text-gray-500 mt-2">
-                                    Includes ₹19 convenience fee for Cash on Delivery
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="flex items-center justify-center space-x-2 mt-5">
-                            <Lock className="h-4 w-4 text-gray-400"/>
-                            <p className="text-sm text-gray-500">Secure payment processing</p>
-                        </div>
                     </div>
-                </form>
-            ) : (
-                <div className="text-center py-16 bg-gray-50 rounded-lg shadow-inner border border-gray-100">
-                    <ShoppingBag className="mx-auto h-12 w-12 text-gray-400"/>
-                    <h3 className="mt-4 text-lg font-medium text-gray-900">No product selected</h3>
-                    <p className="mt-2 text-sm text-gray-500">It looks like you haven't selected any product for
-                        checkout.</p>
+                    {errors.submission && (
+                        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                            <p className="text-sm text-red-600 flex items-center">
+                                <AlertCircle className="h-4 w-4 mr-1"/> {errors.submission}
+                            </p>
+                        </div>
+                    )}
                     <div className="mt-6">
                         <button
-                            type="button"
-                            onClick={() => window.history.back()}
-                            className="inline-flex items-center px-5 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 hover:shadow-lg transform hover:-translate-y-1 active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-400 transition-all duration-300"
+                            type="submit"
+                            disabled={isSubmitting}
+                            className={`w-full ${isSubmitting ? 'bg-orange-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'} focus:ring-4 focus:ring-orange-200 text-white font-medium rounded-lg text-base px-5 py-3 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1 active:translate-y-0 active:shadow-md flex items-center justify-center`}
                         >
-                            Return to Shop
+                            {isSubmitting ? (
+                                <>
+                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor"
+                                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Processing...
+                                </>
+                            ) : (
+                                `${paymentMethod === "cod" ? "Place Order" : "Pay"} ₹${calculateTotal()}`
+                            )}
                         </button>
+
+                        {paymentMethod === "cod" && (
+                            <p className="text-xs text-center text-gray-500 mt-2">
+                                Includes ₹19 convenience fee for Cash on Delivery
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="flex items-center justify-center space-x-2 mt-5">
+                        <Lock className="h-4 w-4 text-gray-400"/>
+                        <p className="text-sm text-gray-500">Secure payment processing</p>
                     </div>
                 </div>
-            )}
-        </div>
-    );
+                </form>
+                ) : (
+                <div className="text-center py-16 bg-gray-50 rounded-lg shadow-inner border border-gray-100">
+                <ShoppingBag className="mx-auto h-12 w-12 text-gray-400"/>
+                <h3 className="mt-4 text-lg font-medium text-gray-900">No product selected</h3>
+                <p className="mt-2 text-sm text-gray-500">It looks like you haven't selected any product for
+                checkout.</p>
+                <div className="mt-6">
+                <button
+                type="button"
+                onClick={() => window.history.back()}
+            className="inline-flex items-center px-5 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 hover:shadow-lg transform hover:-translate-y-1 active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-400 transition-all duration-300"
+        >
+            Return to Shop
+        </button>
+</div>
+</div>
+)
+}
+</div>
+);
 };
 
 export default Checkout;
